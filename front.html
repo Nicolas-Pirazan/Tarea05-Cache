@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultas Populares</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            width: 80%;
+            max-width: 800px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .consulta-button {
+            padding: 8px 16px;
+            margin-top: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .consulta-button:hover {
+            background-color: #0056b3;
+        }
+        .consulta-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .consulta-input {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Consultas Más Populares</h2>
+        <div class="consulta-form">
+            <input type="text" id="consulta-id" class="consulta-input" placeholder="Ingrese ID para consultar" />
+            <button class="consulta-button" onclick="realizarConsulta()">Consultar</button>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Contador</th>
+                    <th>Metadata</th>
+                </tr>
+            </thead>
+            <tbody id="consulta-table-body">
+                <!-- Los datos de la caché se insertarán aquí -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Función para obtener las consultas populares del backend
+        async function fetchConsultasPopulares() {
+            try {
+                const response = await fetch('http://localhost:3000/consultas-populares');
+                if (!response.ok) throw new Error('Error al obtener los datos del cache');
+                
+                const data = await response.json(); 
+                const tableBody = document.getElementById('consulta-table-body');
+                
+                // Limpiar tabla antes de actualizarla
+                tableBody.innerHTML = '';
+                
+                // Llenar la tabla con los datos obtenidos
+                data.forEach((consulta) => {
+                    const row = document.createElement('tr');
+                    
+                    const idCell = document.createElement('td');
+                    idCell.textContent = consulta.id;
+                    row.appendChild(idCell);
+                    
+                    const contadorCell = document.createElement('td');
+                    contadorCell.textContent = consulta.contador;
+                    row.appendChild(contadorCell);
+                    
+                    const metadataCell = document.createElement('td');
+                    metadataCell.textContent = consulta.metadata ? JSON.stringify(consulta.metadata) : 'Sin datos';
+                    row.appendChild(metadataCell);
+
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Función para ejecutar la consulta específica al hacer clic en el botón
+        async function realizarConsulta() {
+            const id = document.getElementById('consulta-id').value;
+            if (!id) {
+                alert("Por favor, ingrese un ID.");
+                return;
+            }
+            
+            try {
+                const response = await fetch(`http://localhost:3000/consulta/${id}`);
+                if (!response.ok) throw new Error('Error al realizar la consulta específica');
+                await fetchConsultasPopulares();
+            } catch (error) {
+                console.error('Error:', error);
+                alert("Error al realizar la consulta.");
+            }
+        }
+
+        // Llamar a la función al cargar la página y actualizar cada 30 segundos
+        fetchConsultasPopulares();
+        setInterval(fetchConsultasPopulares, 30000);
+    </script>
+</body>
+</html>
